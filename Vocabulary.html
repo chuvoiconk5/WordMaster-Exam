@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WordMaster Exam - Learn and test your English vocabulary with an interactive quiz app.">
+    <meta name="keywords" content="vocabulary, quiz, English learning, education">
+    <meta name="author" content="xAI">
+    <title>WordMaster Exam</title>
+    <link rel="icon" type="image/png" href="https://via.placeholder.com/32.png?text=WM">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0e7ff, #fefcbf);
+            background-size: 200% 200%;
+            animation: gradient 15s ease infinite;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        h1, h2 {
+            font-family: 'Playfair Display', serif;
+            color: #1e293b;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .slide-in {
+            animation: slideIn 0.4s ease-out;
+        }
+        .fade-scale {
+            animation: fadeScale 0.6s ease-out;
+        }
+        .feedback-pulse {
+            animation: feedbackPulse 0.3s ease-out;
+        }
+        .blink {
+            animation: blink 0.5s ease-in-out 2;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes feedbackPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .progress-bar {
+            background: linear-gradient(to right, #4f46e5, #facc15);
+            transition: width 0.5s ease;
+        }
+        .exam-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        .dark .exam-card {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .toast {
+            background: linear-gradient(to right, #4f46e5, #facc15);
+            animation: fadeIn 0.5s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+        canvas {
+            max-width: 400px;
+            margin: 0 auto;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            animation: fadeScale 0.8s ease Scouts.
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4f46e5;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .input-file {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #facc15;
+            transition: all 0.3s ease;
+        }
+        .dark .input-file {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #facc15;
+        }
+        .mic-button:hover {
+            background-color: #e0e7ff;
+            transform: scale(1.1);
+        }
+        .dark .mic-button:hover {
+            background-color: #4b5e8a;
+        }
+        .nav-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark .nav-bar {
+            background: rgba(30, 41, 59, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="nav-bar py-4 px-6 flex justify-between items-center">
+        <h1 class="text-2xl md:text-3xl font-bold">WordMaster Exam</h1>
+        <div class="flex items-center space-x-4">
+            <button onclick="backToHome()" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">Home</button>
+            <button onclick="showHistory()" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">History</button>
+            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <svg id="sun-icon" class="w-6 h-6 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg id="moon-icon" class="w-6 h-6 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Home Page -->
+    <div class="flex-1 flex items-center justify-center p-6" id="home">
+        <div class="w-full max-w-2xl exam-card p-8 fade-in">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center">Start Your Vocabulary Exam</h2>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upload Vocabulary File</label>
+                    <input type="file" id="file-upload" accept=".csv,.xlsx,.xls" class="block w-full text-sm text-gray-500 input-file">
+                    <div id="file-loading" class="hidden flex items-center justify-center mt-4">
+                        <div class="spinner w-6 h-6 rounded-full"></div>
+                        <span class="ml-2 text-gray-600 dark:text-gray-300">Loading...</span>
+                    </div>
+                    <p id="file-status" class="text-gray-600 dark:text-gray-300 mt-4 text-center">Upload CSV or Excel file</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Number of Questions</label>
+                    <select id="question-count" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+                        <option value="5">5 Questions</option>
+                        <option value="10">10 Questions</option>
+                        <option value="20">20 Questions</option>
+                        <option value="all">All Questions</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mode</label>
+                    <select id="mode" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+                        <option value="exam">Exam Mode</option>
+                        <option value="practice">Practice Mode</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="english-btn" onclick="startQuiz('english')" disabled class="py-3 px-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:bg-gray-400 transition button">English Vocabulary Exam</button>
+                    <button id="vietnamese-btn" onclick="startQuiz('vietnamese')" disabled class="py-3 px-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:bg-gray-400 transition button">Vietnamese Vocabulary Exam</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Page -->
+    <div class="flex-1 hidden p-6" id="quiz">
+        <div class="flex flex-col lg:flex-row gap-6">
+            <div class="flex-1 exam-card p-8 fade-in">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6">Question</h2>
+                <div class="flex justify-between mb-4 text-sm text-gray-600 dark:text-gray-300">
+                    <span id="timer">Time: 00:00</span>
+                    <span id="question-timer">Question Time: 00</span>
+                </div>
+                <div id="question" class="text-xl md:text-2xl font-medium mb-6 text-center"></div>
+                <div id="options" class="mb-6 space-y-3"></div>
+                <input type="text" id="input-answer" class="hidden w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white" placeholder="Enter English word">
+                <div class="exam-card p-4 mb-6 rounded-xl fade-scale">
+                    <div class="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+                        <div id="progress-bar" class="h-3 rounded-full progress-bar"></div>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300 mt-2">
+                        <p id="progress-text">Completed: 0/0</p>
+                        <p id="score-text">Correct: 0 | Incorrect: 0</p>
+                    </div>
+                </div>
+                <div id="result" class="text-lg font-medium mt-6 text-center feedback-pulse"></div>
+                <div id="attempts" class="text-base text-gray-600 dark:text-gray-300 mt-2 text-center"></div>
+                <div id="hint" class="text-base text-gray-600 dark:text-gray-300 mt-2 text-center hidden"></div>
+            </div>
+            <div class="lg:w-64 exam-card p-6 flex flex-col gap-4">
+                <button onclick="checkAnswer()" class="py-3 px-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition button">Submit</button>
+                <button onclick="showHint()" id="hint-btn" class="py-3 px-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition button">Hint</button>
+                <button onclick="pauseQuiz()" id="pause-btn" class="py-3 px-4 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition button">Pause</button>
+                <button onclick="endQuiz()" class="py-3 px-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition button">End</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Page -->
+    <div class="flex-1 hidden p-6" id="results">
+        <div class="w-full max-w-4xl mx-auto exam-card p-8 fade-in">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6">Exam Results</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="exam-card p-6 rounded-xl fade-scale">
+                    <canvas id="results-chart"></canvas>
+                </div>
+                <div class="exam-card p-6 rounded-xl fade-scale">
+                    <p id="results-summary" class="text-lg font-medium mb-4"></p>
+                    <p id="results-time" class="text-base text-gray-600 dark:text-gray-300 mb-4"></p>
+                    <p id="results-comment" class="text-base text-gray-600 dark:text-gray-300 mb-4"></p>
+                    <div id="wrong-answers" class="text-base text-gray-600 dark:text-gray-300"></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                <button onclick="saveResult()" class="py-3 px-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition button">Save Result</button>
+                <button onclick="startQuiz(testType)" class="py-3 px-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition button">Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Page -->
+    <div class="flex-1 hidden p-6" id="history">
+        <div class="w-full max-w-4xl mx-auto exam-card p-8 fade-in">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6">Exam History</h2>
+            <div id="history-list" class="space-y-4"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                <button onclick="clearHistory()" class="py-3 px-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition button">Clear History</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-gray-600 dark:text-gray-300">
+        <p>WordMaster Exam © 2025 | Powered by xAI</p>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 p-4 rounded-xl text-white hidden toast flex items-center">
+        <svg id="toast-icon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        let vocabulary = [];
+        let usedWords = [];
+        let currentQuestion = {};
+        let testType = '';
+        let incorrectAttempts = 0;
+        let correctAnswers = 0;
+        let incorrectAnswers = 0;
+        let totalQuestions = 0;
+        let maxQuestions = 0;
+        let chartInstance = null;
+        let timerInterval = null;
+        let questionTimerInterval = null;
+        let totalTime = 0;
+        let questionTime = 30;
+        let isPaused = false;
+        let isPracticeMode = false;
+        let history = JSON.parse(localStorage.getItem('examHistory') || '[]');
+        let wrongAnswers = [];
+        let hintUsed = false;
+
+        const correctSound = new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3');
+        const incorrectSound = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
+
+        const html = document.documentElement;
+        const themeToggle = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+
+        function toggleTheme() {
+            html.classList.toggle('dark');
+            sunIcon.classList.toggle('hidden');
+            moonIcon.classList.toggle('hidden');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+            if (chartInstance) showResults();
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            html.classList.add('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        function showToast(message, type = 'error') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.innerHTML = message;
+            toast.className = `fixed top-4 right-4 p-4 rounded-xl text-white toast flex items-center ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            toastIcon.innerHTML = type === 'error' ?
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />' :
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />';
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function speakWord(word) {
+            if (!window.speechSynthesis) {
+                showToast('Text-to-speech not supported in this browser', 'error');
+                return;
+            }
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.7;
+            utterance.pitch = 1.2;
+            utterance.volume = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const femaleVoice = voices.find(voice =>
+                voice.name.toLowerCase().includes('female') ||
+                voice.name.toLowerCase().includes('wavenet-f') ||
+                voice.name.toLowerCase().includes('samantha') ||
+                voice.name.toLowerCase().includes('emma') ||
+                voice.name.toLowerCase().includes('google') ||
+                voice.name.toLowerCase().includes('zira')
+            );
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            } else {
+                showToast('No female voice available, using default voice', 'error');
+            }
+            window.speechSynthesis.speak(utterance);
+        }
+
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('file-loading').classList.remove('hidden');
+            document.getElementById('file-status').classList.add('hidden');
+
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (fileExtension === 'csv') {
+                loadCSVFile(file);
+            } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+                loadExcelFile(file);
+            } else {
+                document.getElementById('file-loading').classList.add('hidden');
+                document.getElementById('file-status').classList.remove('hidden');
+                showToast('Unsupported file format', 'error');
+            }
+        }
+
+        function loadCSVFile(file) {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    vocabulary = results.data.map(row => ({
+                        english: row['Từ vựng'] || row['từ vựng'] || row['Vocabulary'] || row['vocabulary'] || '',
+                        pronunciation: row['Phiên âm'] || row['phiên âm'] || row['Pronunciation'] || row['pronunciation'] || '',
+                        vietnamese: row['Ý nghĩa'] || row['ý nghĩa'] || row['Meaning'] || row['meaning'] || ''
+                    })).filter(row => row.english && row.vietnamese);
+
+                    document.getElementById('file-loading').classList.add('hidden');
+                    document.getElementById('file-status').classList.remove('hidden');
+                    updateFileStatus();
+                },
+                error: function(error) {
+                    document.getElementById('file-loading').classList.add('hidden');
+                    document.getElementById('file-status').classList.remove('hidden');
+                    showToast('Error reading CSV file', 'error');
+                    console.error(error);
+                }
+            });
+        }
+
+        function loadExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                vocabulary = jsonData.map(row => ({
+                    english: row['Từ vựng'] || row['từ vựng'] || row['Vocabulary'] || row['vocabulary'] || '',
+                    pronunciation: row['Phiên âm'] || row['phiên âm'] || row['Pronunciation'] || row['pronunciation'] || '',
+                    vietnamese: row['Ý nghĩa'] || row['ý nghĩa'] || row['Meaning'] || row['meaning'] || ''
+                })).filter(row => row.english && row.vietnamese);
+
+                document.getElementById('file-loading').classList.add('hidden');
+                document.getElementById('file-status').classList.remove('hidden');
+                updateFileStatus();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function updateFileStatus() {
+            if (vocabulary.length > 0) {
+                document.getElementById('file-status').innerHTML = `Loaded ${vocabulary.length} vocabulary words`;
+                document.getElementById('english-btn').disabled = false;
+                document.getElementById('vietnamese-btn').disabled = false;
+                showToast('File loaded successfully!', 'success');
+            } else {
+                document.getElementById('file-status').innerHTML = 'Invalid file or missing data';
+                showToast('Invalid file or missing data', 'error');
+            }
+        }
+
+        function startQuiz(type) {
+            if (vocabulary.length === 0) {
+                showToast('Please upload a file first!', 'error');
+                return;
+            }
+            testType = type;
+            isPracticeMode = document.getElementById('mode').value === 'practice';
+            correctAnswers = 0;
+            incorrectAnswers = 0;
+            totalQuestions = 0;
+            usedWords = [];
+            wrongAnswers = [];
+            const questionCount = document.getElementById('question-count').value;
+            maxQuestions = questionCount === 'all' ? vocabulary.length : parseInt(questionCount);
+            if (maxQuestions > vocabulary.length) {
+                maxQuestions = vocabulary.length;
+                showToast(`Only ${vocabulary.length} words available`, 'error');
+            }
+            document.getElementById('home').classList.add('hidden');
+            document.getElementById('quiz').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('history').classList.add('hidden');
+            incorrectAttempts = 0;
+            totalTime = 0;
+            questionTime = isPracticeMode ? Infinity : 30;
+            document.getElementById('attempts').innerHTML = '';
+            startTimer();
+            updateProgress();
+            loadQuestion();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            clearInterval(questionTimerInterval);
+            if (isPracticeMode) {
+                document.getElementById('timer').innerHTML = 'Time: N/A';
+                document.getElementById('question-timer').innerHTML = 'Question Time: N/A';
+                return;
+            }
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    totalTime++;
+                    document.getElementById('timer').innerHTML = `Time: ${formatTime(totalTime)}`;
+                }
+            }, 1000);
+            questionTimerInterval = setInterval(() => {
+                if (!isPaused) {
+                    questionTime--;
+                    document.getElementById('question-timer').innerHTML = `Question Time: ${questionTime}s`;
+                    if (questionTime <= 0) {
+                        incorrectAnswers++;
+                        totalQuestions++;
+                        wrongAnswers.push({
+                            word: currentQuestion.english,
+                            correct: currentQuestion.vietnamese,
+                            selected: 'Time out'
+                        });
+                        updateProgress();
+                        showToast('Time out! Moving to next question', 'error');
+                        loadQuestion();
+                    }
+                }
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function pauseQuiz() {
+            if (isPracticeMode) return;
+            isPaused = !isPaused;
+            document.getElementById('pause-btn').innerHTML = isPaused ? 'Resume' : 'Pause';
+            showToast(isPaused ? 'Quiz paused' : 'Quiz resumed', 'success');
+        }
+
+        function backToHome() {
+            clearInterval(timerInterval);
+            clearInterval(questionTimerInterval);
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('history').classList.add('hidden');
+            document.getElementById('home').classList.remove('hidden');
+            vocabulary = [];
+            usedWords = [];
+            wrongAnswers = [];
+            document.getElementById('file-status').innerHTML = 'Upload CSV or Excel file';
+            document.getElementById('english-btn').disabled = true;
+            document.getElementById('vietnamese-btn').disabled = true;
+            document.getElementById('file-upload').value = '';
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+        }
+
+        function endQuiz() {
+            clearInterval(timerInterval);
+            clearInterval(questionTimerInterval);
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            showResults();
+        }
+
+        function showHistory() {
+            document.getElementById('home').classList.add('hidden');
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('history').classList.remove('hidden');
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                historyList.innerHTML = '<p class="text-gray-600 dark:text-gray-300 text-center">No history available</p>';
+                return;
+            }
+            history.forEach((result, index) => {
+                const percentage = (result.correct / result.total * 100).toFixed(1);
+                const div = document.createElement('div');
+                div.className = 'exam-card p-4 rounded-xl';
+                div.innerHTML = `
+                    <p class="text-lg font-medium">Test ${index + 1} (${result.type}${result.practice ? ' - Practice' : ''})</p>
+                    <p>${result.correct}/${result.total} (${percentage}%) - ${result.time}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Date: ${result.date}</p>
+                `;
+                historyList.appendChild(div);
+            });
+        }
+
+        function clearHistory() {
+            history = [];
+            localStorage.setItem('examHistory', JSON.stringify(history));
+            showHistory();
+            showToast('History cleared!', 'success');
+        }
+
+        function saveResult() {
+            if (isPracticeMode) {
+                showToast('Results not saved in practice mode', 'error');
+                return;
+            }
+            const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions * 100).toFixed(1) : 0;
+            const result = {
+                type: testType,
+                practice: isPracticeMode,
+                correct: correctAnswers,
+                total: totalQuestions,
+                percentage: percentage,
+                time: isPracticeMode ? 'N/A' : formatTime(totalTime),
+                date: new Date().toLocaleString()
+            };
+            history.push(result);
+            localStorage.setItem('examHistory', JSON.stringify(history));
+            showToast('Result saved successfully!', 'success');
+        }
+
+        function showHint() {
+            if (hintUsed) {
+                showToast('Hint already used for this question!', 'error');
+                return;
+            }
+            hintUsed = true;
+            const hintDiv = document.getElementById('hint');
+            let hintText = '';
+            if (testType === 'english') {
+                hintText = `Hint: The meaning starts with "${currentQuestion.vietnamese.slice(0, 2)}..."`;
+            } else {
+                hintText = `Hint: The word starts with "${currentQuestion.english.slice(0, 2)}..."`;
+            }
+            hintDiv.innerHTML = hintText;
+            hintDiv.classList.remove('hidden');
+            hintDiv.classList.add('fade-in');
+            showToast('Hint displayed!', 'success');
+        }
+
+        function loadQuestion() {
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('hint').classList.add('hidden');
+            incorrectAttempts = 0;
+            hintUsed = false;
+            questionTime = isPracticeMode ? Infinity : 30;
+            document.getElementById('attempts').innerHTML = '';
+            document.getElementById('hint-btn').disabled = false;
+
+            if (usedWords.length >= maxQuestions || usedWords.length >= vocabulary.length) {
+                endQuiz();
+                return;
+            }
+
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * vocabulary.length);
+            } while (usedWords.includes(randomIndex));
+
+            usedWords.push(randomIndex);
+            currentQuestion = vocabulary[randomIndex];
+
+            if (testType === 'english') {
+                document.getElementById('question').innerHTML = `
+                    <div class="flex items-center justify-center">
+                        <div class="text-2xl font-bold">${currentQuestion.english}</div>
+                        <button onclick="speakWord('${currentQuestion.english}')" class="mic-button p-2 ml-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-indigo-100 dark:hover:bg-indigo-600 transition">
+                            <svg class="w-5 h-5 text-gray-800 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="text-sm italic text-gray-500 dark:text-gray-400">${currentQuestion.pronunciation || 'N/A'}</div>
+                `;
+                document.getElementById('input-answer').classList.add('hidden');
+                document.getElementById('options').classList.remove('hidden');
+                loadOptions();
+            } else {
+                document.getElementById('question').innerHTML = `<div class="text-2xl font-bold">${currentQuestion.vietnamese}</div>`;
+                document.getElementById('input-answer').classList.remove('hidden');
+                document.getElementById('input-answer').classList.add('fade-in');
+                document.getElementById('options').classList.add('hidden');
+                document.getElementById('input-answer').value = '';
+            }
+        }
+
+        function loadOptions() {
+            const options = [currentQuestion.vietnamese];
+            const availableWords = vocabulary.filter((_, index) => !usedWords.includes(index) && vocabulary[index].vietnamese !== currentQuestion.vietnamese);
+
+            const similarWords = availableWords.filter(word => word.vietnamese.toLowerCase().startsWith(currentQuestion.vietnamese.toLowerCase().slice(0, 2)));
+            const otherWords = availableWords.filter(word => !similarWords.includes(word));
+
+            let distractors = [];
+            while (distractors.length < 3 && (similarWords.length > 0 || otherWords.length > 0)) {
+                let word;
+                if (similarWords.length > 0 && (distractors.length < 2 || otherWords.length === 0)) {
+                    word = similarWords.splice(Math.floor(Math.random() * similarWords.length), 1)[0];
+                } else if (otherWords.length > 0) {
+                    word = otherWords.splice(Math.floor(Math.random() * otherWords.length), 1)[0];
+                }
+                if (word && !options.includes(word.vietnamese)) {
+                    distractors.push(word.vietnamese);
+                }
+            }
+
+            while (distractors.length < 3 && vocabulary.length > options.length) {
+                const randomWord = vocabulary[Math.floor(Math.random() * vocabulary.length)].vietnamese;
+                if (!options.includes(randomWord) && !distractors.includes(randomWord)) {
+                    distractors.push(randomWord);
+                }
+            }
+
+            options.push(...distractors);
+            options.sort(() => Math.random() - 0.5);
+
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            options.forEach((option, index) => {
+                const div = document.createElement('div');
+                div.className = 'option p-4 bg-gray-100 dark:bg-gray-700 rounded-xl cursor-pointer text-gray-800 dark:text-white hover:bg-indigo-100 dark:hover:bg-indigo-600 transition slide-in';
+                div.style.animationDelay = `${index * 0.1}s`;
+                div.innerHTML = option;
+                div.dataset.value = option;
+                div.onclick = () => checkAnswer(option);
+                optionsDiv.appendChild(div);
+            });
+        }
+
+        function updateProgress() {
+            const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions * 100) : 0;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-text').innerHTML = `Completed: ${correctAnswers}/${maxQuestions}`;
+            document.getElementById('score-text').innerHTML = `Correct: ${correctAnswers} | Incorrect: ${incorrectAnswers}`;
+        }
+
+        function showResults() {
+            const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions * 100) : 0;
+            document.getElementById('results-summary').innerHTML = `You answered ${correctAnswers} out of ${totalQuestions} questions correctly (${percentage.toFixed(1)}%).`;
+            document.getElementById('results-time').innerHTML = isPracticeMode ? 'Total time: N/A' : `Total time: ${formatTime(totalTime)}`;
+
+            let comment = '';
+            if (percentage >= 90) {
+                comment = 'Outstanding! You’ve mastered most of the vocabulary. Keep it up!';
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else if (percentage >= 70) {
+                comment = 'Great job! You have a solid foundation, but review some words to score higher.';
+            } else if (percentage >= 50) {
+                comment = 'Good effort! Practice more to improve accuracy and vocabulary retention.';
+            } else if (totalQuestions === 0) {
+                comment = 'You haven’t answered any questions. Try again to test your knowledge!';
+            } else {
+                comment = 'Don’t give up! Review the vocabulary thoroughly and try again!';
+            }
+            document.getElementById('results-comment').innerHTML = comment;
+
+            const wrongAnswersDiv = document.getElementById('wrong-answers');
+            if (wrongAnswers.length > 0) {
+                wrongAnswersDiv.innerHTML = '<p class="font-medium mb-2">Words to review:</p>';
+                wrongAnswers.forEach(answer => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 bg-red-100 dark:bg-red-900 rounded-xl mb-1';
+                    div.innerHTML = `<span class="font-medium">${answer.word}</span>: ${answer.correct} (Your answer: ${answer.selected})`;
+                    wrongAnswersDiv.appendChild(div);
+                });
+            } else {
+                wrongAnswersDiv.innerHTML = '<p class="text-green-600 dark:text-green-300">No wrong answers! Great job!</p>';
+            }
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('results-chart').getContext('2d');
+            const gradientCorrect = ctx.createLinearGradient(0, 0, 0, 300);
+            gradientCorrect.addColorStop(0, '#4f46e5');
+            gradientCorrect.addColorStop(1, '#facc15');
+            const gradientIncorrect = ctx.createLinearGradient(0, 0, 0, 300);
+            gradientIncorrect.addColorStop(0, '#ef4444');
+            gradientIncorrect.addColorStop(1, '#f97316');
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Correct', 'Incorrect'],
+                    datasets: [{
+                        data: [correctAnswers, incorrectAnswers],
+                        backgroundColor: [gradientCorrect, gradientIncorrect],
+                        borderColor: ['#ffffff', '#ffffff'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 14, family: 'Inter' },
+                                color: html.classList.contains('dark') ? '#ffffff' : '#1e293b'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        centerText: {
+                            display: true,
+                            text: `${percentage.toFixed(1)}%`,
+                            color: html.classList.contains('dark') ? '#ffffff' : '#1e293b',
+                            font: { size: 24, family: 'Inter', weight: '500' }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'centerText',
+                    beforeDraw(chart) {
+                        const { ctx, chartArea, data } = chart;
+                        const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        if (total === 0) return;
+
+                        const percentage = (data.datasets[0].data[0] / total * 100).toFixed(1);
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        const centerX = (chartArea.left + chartArea.right) / 2;
+                        const centerY = (chartArea.top + chartArea.bottom) / 2;
+                        ctx.font = chart.options.plugins.centerText.font.size + 'px ' + chart.options.plugins.centerText.font.family;
+                        ctx.fillStyle = chart.options.plugins.centerText.color;
+                        ctx.fillText(percentage + '%', centerX, centerY);
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        function checkAnswer(selected) {
+            let isCorrect = false;
+            if (!isPracticeMode) totalQuestions++;
+
+            if (testType === 'english') {
+                isCorrect = selected === currentQuestion.vietnamese;
+                const options = document.querySelectorAll('#options .option');
+                options.forEach(option => {
+                    if (option.dataset.value === currentQuestion.vietnamese) {
+                        option.classList.add('bg-green-500', 'text-white', 'blink');
+                        option.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'hover:bg-indigo-100', 'dark:hover:bg-indigo-600');
+                    } else if (option.dataset.value === selected && !isCorrect) {
+                        option.classList.add('bg-red-500', 'text-white');
+                        option.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'hover:bg-indigo-100', 'dark:hover:bg-indigo-600');
+                    }
+                    option.style.pointerEvents = 'none';
+                });
+
+                document.getElementById('result').innerHTML = isCorrect ? 'Correct!' : `Incorrect! The correct answer is: ${currentQuestion.vietnamese}`;
+                document.getElementById('result').classList.add('feedback-pulse');
+                setTimeout(() => document.getElementById('result').classList.remove('feedback-pulse'), 300);
+
+                if (isCorrect) {
+                    correctAnswers++;
+                    correctSound.play();
+                } else {
+                    incorrectAnswers++;
+                    incorrectSound.play();
+                    if (navigator.vibrate) navigator.vibrate(200);
+                    if (!isPracticeMode) {
+                        wrongAnswers.push({
+                            word: currentQuestion.english,
+                            correct: currentQuestion.vietnamese,
+                            selected: selected
+                        });
+                    }
+                }
+                if (!isPracticeMode) updateProgress();
+                setTimeout(loadQuestion, 1500);
+            } else {
+                const userAnswer = document.getElementById('input-answer').value.trim().toLowerCase();
+                isCorrect = userAnswer === currentQuestion.english.toLowerCase();
+                if (isCorrect) {
+                    document.getElementById('result').innerHTML = 'Correct!';
+                    document.getElementById('result').classList.add('feedback-pulse');
+                    setTimeout(() => document.getElementById('result').classList.remove('feedback-pulse'), 300);
+                    incorrectAttempts = 0;
+                    correctAnswers++;
+                    correctSound.play();
+                    if (!isPracticeMode) updateProgress();
+                    setTimeout(loadQuestion, 1000);
+                } else {
+                    incorrectAttempts++;
+                    document.getElementById('attempts').innerHTML = `Incorrect attempts: ${incorrectAttempts}`;
+                    if (incorrectAttempts >= 3 && !isPracticeMode) {
+                        document.getElementById('result').innerHTML = `Too many incorrect attempts! The correct answer is: ${currentQuestion.english}`;
+                        document.getElementById('result').classList.add('feedback-pulse');
+                        setTimeout(() => document.getElementById('result').classList.remove('feedback-pulse'), 300);
+                        incorrectAttempts = 0;
+                        incorrectAnswers++;
+                        incorrectSound.play();
+                        if (navigator.vibrate) navigator.vibrate(200);
+                        wrongAnswers.push({
+                            word: currentQuestion.english,
+                            correct: currentQuestion.english,
+                            selected: userAnswer
+                        });
+                        updateProgress();
+                        setTimeout(loadQuestion, 2000);
+                    } else {
+                        document.getElementById('result').innerHTML = 'Incorrect! Try again.';
+                        document.getElementById('result').classList.add('feedback-pulse');
+                        setTimeout(() => document.getElementById('result').classList.remove('feedback-pulse'), 300);
+                        incorrectSound.play();
+                        if (navigator.vibrate) navigator.vibrate(200);
+                    }
+                }
+            }
+        }
+
+        document.getElementById('file-upload').addEventListener('change', loadFile);
+    </script>
+</body>
+</html>
